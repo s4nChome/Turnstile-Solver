@@ -58,17 +58,17 @@ class TurnstileAPIServer:
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Turnstile Solver</title>
+        <title>s4nchome Turnstile Solver</title>
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async></script>
         <script>
             async function fetchIP() {
                 try {
                     const response = await fetch('https://api64.ipify.org?format=json');
                     const data = await response.json();
-                    document.getElementById('ip-display').innerText = `Your IP: ${data.ip}`;
+                    document.getElementById('ip-display').innerText = `当前IP: ${data.ip}`;
                 } catch (error) {
                     console.error('Error fetching IP:', error);
-                    document.getElementById('ip-display').innerText = 'Failed to fetch IP';
+                    document.getElementById('ip-display').innerText = '获取IP失败';
                 }
             }
             window.onload = fetchIP;
@@ -76,7 +76,7 @@ class TurnstileAPIServer:
     </head>
     <body>
         <!-- cf turnstile -->
-        <p id="ip-display">Fetching your IP...</p>
+        <p id="ip-display">正在获取IP...</p>
     </body>
     </html>
     """
@@ -121,7 +121,7 @@ class TurnstileAPIServer:
         self.app.before_serving(self._startup)
         self.app.route('/turnstile', methods=['GET'])(self.process_turnstile)
         self.app.route('/result', methods=['GET'])(self.get_result)
-        self.app.route('/')(self.index)
+        # self.app.route('/')(self.index)
 
     async def _startup(self) -> None:
         """Initialize the browser and page pool on startup."""
@@ -214,7 +214,7 @@ class TurnstileAPIServer:
             if self.debug:
                 logger.debug(f"Browser {index}: Starting Turnstile response retrieval loop")
 
-            for _ in range(10):
+            for _ in range(30):
                 try:
                     turnstile_check = await page.input_value("[name=cf-turnstile-response]", timeout=2000)
                     if turnstile_check == "":
@@ -222,7 +222,7 @@ class TurnstileAPIServer:
                             logger.debug(f"Browser {index}: Attempt {_} - No Turnstile response yet")
 
                         await page.click("//div[@class='cf-turnstile']", timeout=3000)
-                        await asyncio.sleep(0.5)
+                        await asyncio.sleep(2)
                     else:
                         element = await page.query_selector("[name=cf-turnstile-response]")
                         if element:
@@ -347,10 +347,10 @@ def parse_args():
 
     parser.add_argument('--headless', type=bool, default=False, help='Run the browser in headless mode, without opening a graphical interface. This option requires the --useragent argument to be set (default: False)')
     parser.add_argument('--useragent', type=str, default=None, help='Specify a custom User-Agent string for the browser. If not provided, the default User-Agent is used')
-    parser.add_argument('--debug', type=bool, default=False, help='Enable or disable debug mode for additional logging and troubleshooting information (default: False)')
-    parser.add_argument('--browser_type', type=str, default='chromium', help='Specify the browser type for the solver. Supported options: chromium, chrome, msedge, camoufox (default: chromium)')
+    parser.add_argument('--debug', type=bool, default=True, help='Enable or disable debug mode for additional logging and troubleshooting information (default: False)')
+    parser.add_argument('--browser_type', type=str, default='camoufox', help='Specify the browser type for the solver. Supported options: chromium, chrome, msedge, camoufox (default: chromium)')
     parser.add_argument('--thread', type=int, default=1, help='Set the number of browser threads to use for multi-threaded mode. Increasing this will speed up execution but requires more resources (default: 1)')
-    parser.add_argument('--proxy', type=bool, default=False, help='Enable proxy support for the solver (Default: False)')
+    parser.add_argument('--proxy', type=bool, default=True, help='Enable proxy support for the solver (Default: False)')
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Specify the IP address where the API solver runs. (Default: 127.0.0.1)')
     parser.add_argument('--port', type=str, default='5000', help='Set the port for the API solver to listen on. (Default: 5000)')
     return parser.parse_args()
